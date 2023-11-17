@@ -80,7 +80,7 @@ const WaterMelon = () => {
       if (isGameOver) return;
   
       isClicking = true;
-      //mousePos = e.touches[0].clientX / parent.style.zoom;
+      mousePos = e.touches[0].clientX / 1;//parent.style.zoom;
     });
   
     canvasRef.current.addEventListener("mouseup", () => {
@@ -115,13 +115,13 @@ const WaterMelon = () => {
       if (isGameOver) return;
   
       const rect = canvasRef.current.getBoundingClientRect();
-      //mousePos = e.clientX / parent.style.zoom - rect.left;
+      mousePos = e.clientX / 1 - rect.left; //parent.style.zoom - rect.left;
     });
     canvasRef.current.addEventListener("touchmove", (e) => {
       if (isGameOver) return;
   
       const rect = canvasRef.current.getBoundingClientRect();
-      //mousePos = e.touches[0].clientX / parent.style.zoom - rect.left;
+      mousePos = e.touches[0].clientX / 1 - rect.left; //parent.style.zoom - rect.left;
     });
 
     canvasRef.current.addEventListener("click", () => {
@@ -202,7 +202,7 @@ const WaterMelon = () => {
     }
 
     function createNewBall(size) {
-      ball = newBall(render.options.width / 2, 50, size);
+      ball = newBall(render.options.width / 2, 50, size*1.5);
       ball.collisionFilter = {
         group: -1,
         category: 2,
@@ -213,10 +213,11 @@ const WaterMelon = () => {
     }
 
     function newBall(x, y, size) {
+      let sizeStr = String(Math.floor(size));
       let c = Matter.Bodies.circle(x, y, size * 10, {
         render: {
             sprite: {
-                texture: process.env.PUBLIC_URL + '/assets/img/1.png',
+                texture: process.env.PUBLIC_URL + '/assets/img/' + sizeStr + '.png',
                 xScale: size / 15,
                 yScale: size / 15,
               },
