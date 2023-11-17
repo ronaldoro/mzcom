@@ -202,7 +202,6 @@ const WaterMelon = () => {
     }
 
     function createNewBall(size) {
-      // ball 변수를 useRef의 current에 할당
       ball = newBall(render.options.width / 2, 50, size);
       ball.collisionFilter = {
         group: -1,
@@ -217,16 +216,16 @@ const WaterMelon = () => {
       let c = Matter.Bodies.circle(x, y, size * 10, {
         render: {
             sprite: {
-                texture: process.env.PUBLIC_URL + '/assets/img/0.png',
-                xScale: size / 12.75,
-                yScale: size / 12.75,
+                texture: process.env.PUBLIC_URL + '/assets/img/1.png',
+                xScale: size / 15,
+                yScale: size / 15,
               },
         },
       });
       c.size = size;
       c.createdAt = Date.now();
-      c.restitution = 0.3;
-      c.friction = 0.1;
+      c.restitution = 0.4;
+      c.friction = 0.5;
 
       return c;
     }
@@ -241,6 +240,7 @@ const WaterMelon = () => {
       }
 
     Events.on(engine, "beforeUpdate", () => {
+        //
         if (isGameOver) return;
     
         if (ball != null) {
