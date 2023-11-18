@@ -26,8 +26,6 @@ const WaterMelon = () => {
     });
 
     const times = [];
-    const parent = document.getElementById('parent');
-    //const floor = document.getElementById("floor");
 
     let fps = 100;
 
@@ -40,6 +38,10 @@ const WaterMelon = () => {
     let score = 0;
 
     let isLineEnable = false;
+    let zoom = 1;
+
+    let effectsMap = new Map();
+    const ctx = canvasRef.current.getContext("2d");
 
     const background = Bodies.rectangle(240, 360, 480, 720, {
         isStatic: true,
@@ -80,7 +82,7 @@ const WaterMelon = () => {
       if (isGameOver) return;
   
       isClicking = true;
-      mousePos = e.touches[0].clientX / 1;//parent.style.zoom;
+      mousePos = e.touches[0].clientX / zoom;//parent.style.zoom;
     });
   
     canvasRef.current.addEventListener("mouseup", () => {
@@ -115,13 +117,13 @@ const WaterMelon = () => {
       if (isGameOver) return;
   
       const rect = canvasRef.current.getBoundingClientRect();
-      mousePos = e.clientX / 1 - rect.left; //parent.style.zoom - rect.left;
+      mousePos = e.clientX / zoom - rect.left; //parent.style.zoom - rect.left;
     });
     canvasRef.current.addEventListener("touchmove", (e) => {
       if (isGameOver) return;
   
       const rect = canvasRef.current.getBoundingClientRect();
-      mousePos = e.touches[0].clientX / 1 - rect.left; //parent.style.zoom - rect.left;
+      mousePos = e.touches[0].clientX / zoom - rect.left; //parent.style.zoom - rect.left;
     });
 
     canvasRef.current.addEventListener("click", () => {
@@ -190,7 +192,6 @@ const WaterMelon = () => {
       }      
 
     function init() {
-      // ball 변수를 useRef의 current에 할당
       ball = null;
       engine.timing.timeScale = 1;
 
@@ -218,15 +219,15 @@ const WaterMelon = () => {
         render: {
             sprite: {
                 texture: process.env.PUBLIC_URL + '/assets/img/' + sizeStr + '.png',
-                xScale: size / 15,
-                yScale: size / 15,
+                xScale: size / 12.75,
+                yScale: size / 12.75,
               },
         },
       });
       c.size = size;
       c.createdAt = Date.now();
-      c.restitution = 0.4;
-      c.friction = 0.5;
+      c.restitution = 0.5;
+      c.friction = 0.3;
 
       return c;
     }
@@ -239,10 +240,28 @@ const WaterMelon = () => {
     
         if (ball != null) World.remove(engine.world, ball);
       }
-
+    const startTime = Date.now();
     Events.on(engine, "beforeUpdate", () => {
-        //
         if (isGameOver) return;
+
+        effectsMap.forEach((scale, effect) => {
+            
+            const currentTime = Date.now();
+            const elapsedTime = (currentTime - startTime) / 100; 
+            Body.translate(effect, {
+                x: Math.sin(elapsedTime) * 2,
+                y: -1,
+              });
+
+            const newScale = scale + 0.002;
+            if(newScale > 1.07){
+                World.remove(engine.world, effect);
+                effectsMap.delete(effect);
+            } else {
+                effectsMap.set(effect, newScale);
+                Body.scale(effect, newScale, newScale);
+            }
+        });
     
         if (ball != null) {
           const gravity = engine.world.gravity;
@@ -274,7 +293,7 @@ const WaterMelon = () => {
             ) {
               gameOver();
             }
-          } else if (body.position.y < 150) {
+          } else if (body.position.y < 200) {
             if (
               body !== ball &&
               Math.abs(body.velocity.x) < 0.5 &&
@@ -318,12 +337,66 @@ const WaterMelon = () => {
                   bodies[0].size === 11 ? 11 : bodies[0].size + 1
                 )
               );
-    
+              score += bodies[0].size;
+
+              const effect = Bodies.rectangle((bodies[0].position.x + bodies[1].position.x) / 2, (bodies[0].position.y + bodies[1].position.y) / 2, 30, 30, {
+                isStatic: true,
+                render: {
+                    sprite: {
+                        texture: process.env.PUBLIC_URL + '/assets/img/effect.png',
+                        opacity: 1.0,
+                        xScale: 0.4,
+                        yScale: 0.4,
+                      },
+                }
+              });
+              effect.collisionFilter = {
+                group: 0,
+                category: 1,
+                mask: -2,
+              };
+
+              World.add(engine.world, effect);
+              effectsMap.set(effect, 1);
+
               //var audio = new Audio("assets/pop.wav");
               //audio.play();
             }
           }
         });
+      }
+
+      Events.on(render, "afterRender", () => {
+        if (isGameOver) {
+          ctx.fillStyle = "#ffffff55";
+          ctx.rect(0, 0, 480, 720);
+          ctx.fill();
+    
+          writeText("Game Over", "center", 240, 280, 50);
+          writeText("Score: " + score, "center", 240, 320, 30);
+        } else {
+          writeText(score, "start", 25, 60, 40);
+    
+          if (isLineEnable) {
+            ctx.strokeStyle = "#f55";
+            ctx.beginPath();
+            ctx.moveTo(0, 100);
+            ctx.lineTo(480, 100);
+            ctx.stroke();
+          }
+        }
+      });     
+
+      function writeText(text, textAlign, x, y, size) {
+        ctx.font = `${size}px NanumSquare`;
+        ctx.textAlign = textAlign;
+        ctx.lineWidth = size / 8;
+    
+        ctx.strokeStyle = "#000";
+        ctx.strokeText(text, x, y);
+    
+        ctx.fillStyle = "#fff";
+        ctx.fillText(text, x, y);
       }
 
     // Your Matter.js setup code here
